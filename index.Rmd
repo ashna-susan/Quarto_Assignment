@@ -4,8 +4,8 @@ author: "Ashna Susan Paul"
 format: html
 ---
 
-```{r}
-show_col_types = FALSE
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 my_data <- read.csv("unicef_indicator_2 (1).csv")
 ```
 
@@ -25,20 +25,17 @@ library(sf)
 library(rnaturalearth)
 library(rnaturalearthdata)
 
-# Assuming your data has the columns 'country', 'time_period', and 'obs_value'
-# Calculate the average observed value per country
+
 avg_obs_value <- my_data %>%
   group_by(alpha_3_code) %>%
   summarize(avg_value = mean(obs_value, na.rm = TRUE))  # Replace na.rm = TRUE if you want to ignore NA values
 
-# Get the world map data
 world <- ne_countries(scale = "medium", returnclass = "sf")
 
-# Merge the average observed values with the world map
 world_data <- world %>%
   left_join(avg_obs_value, by = c("iso_a3" = "alpha_3_code"))
 
-# Plot the map
+
 ggplot(data = world_data) +
   geom_sf(aes(fill = avg_value), color = "white") +
   scale_fill_viridis_c(name = "Avg Obs Value", option = "C") +
@@ -56,7 +53,6 @@ top_10_2022_asc <- my_data %>%
   dplyr::arrange(obs_value) %>%
   dplyr::slice_min(order_by = obs_value, n = 10)
 
-# Creating the horizontal bar chart for these countries
 ggplot(top_10_2022_asc, aes(x = reorder(country, obs_value), y = obs_value)) +
   geom_bar(stat = "identity", fill = "red") +
   labs(x = "Country", y = "Observed Value",
@@ -73,7 +69,6 @@ successful immunisation programmes.
 df_time_filtered <- my_data %>%
   filter(time_period >= 2009, time_period <= 2023)
 
-# Calculate the change in observed value for each country from 2009 to 2023
 df_change <- df_time_filtered %>%
   group_by(country) %>%
   summarise(
@@ -83,17 +78,15 @@ df_change <- df_time_filtered %>%
   ) %>%
   ungroup()
 
-# Get the top 5 countries with the highest reduction (assuming lower obs_value is better)
 top_countries <- df_change %>%
   arrange(desc(change)) %>%
   top_n(5, change) %>%
   select(country)
 
-# Filter the original data to include only the top 5 countries
 df_top_countries <- df_time_filtered %>%
   filter(country %in% top_countries$country)
 
-# Create the line chart
+
 ggplot(df_top_countries, aes(x = time_period, y = obs_value, color = country)) +
   geom_line() +
   geom_point() +
@@ -111,13 +104,12 @@ Bahamas from 2011 to 2013.These nations can be used as case studies to show how 
 df_filtered <- my_data %>%
   filter(time_period >= 2011, time_period <= 2023)
 
-# Calculate the average obs_value for each time period
+
 time_period_averages <- df_filtered %>%
   group_by(time_period) %>%
   summarize(avg_obs_value = mean(obs_value, na.rm = TRUE)) %>%
   arrange(desc(avg_obs_value))
 
-# Create a scatter plot with time_period on the y-axis and avg_obs_value on the x-axis
 ggplot(time_period_averages, aes(x = avg_obs_value, y = as.factor(time_period))) +
   geom_point() +
   labs(x = "Average Observed Value", y = "Time Period", title = "Average Observed Value by Time Period (2011 to 2023)") +
